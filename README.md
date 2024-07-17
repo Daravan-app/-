@@ -127,7 +127,7 @@
         <button onclick="calculateScore()">คำนวณคะแนน</button>
 
         <div class="result" id="result"></div>
-        <button onclick="sendEmail()">ส่งผลลัพธ์ทางอีเมล</button>
+        <button onclick="sendToWebhook()">ส่งผลลัพธ์ทางอีเมล</button>
     </div>
 
     <script>
@@ -147,38 +147,29 @@
             document.getElementById('result').innerText = `คะแนนรวม SARC-F ของคุณคือ ${totalScore} ซึ่งบ่งชี้ว่าคุณมีความเสี่ยง ${riskLevel} ของการเกิดภาวะมวลกล้ามเนื้อน้อย.`;
         }
 
-        function sendEmail() {
-            const data = [
-                { คำถาม: '1. ท่านคิดว่าการยกและถือของที่มีน้ำหนัก 20 กิโลกรัมยากหรือไม่?', คะแนน: document.getElementById('q1').value },
-                { คำถาม: '2. ท่านรู้สึกว่าการเดินภายในห้องยากหรือไม่?', คะแนน: document.getElementById('q2').value },
-                { คำถาม: '3. ท่านเคลื่อนย้ายตัวเองจากเก้าอี้ไปเตียงนอนยากหรือไม่?', คะแนน: document.getElementById('q3').value },
-                { คำถาม: '4. ท่านรู้สึกว่าการเดินขึ้นบันไดจำนวน 10 ขั้นยากหรือไม่?', คะแนน: document.getElementById('q4').value },
-                { คำถาม: '5. ท่านเคยมีประวัติหกล้มมากี่ครั้ง?', คะแนน: document.getElementById('q5').value },
-                { คำถาม: 'คะแนนรวม', คะแนน: totalScore },
-                { คำถาม: 'ระดับความเสี่ยง', คะแนน: riskLevel }
-            ];
+        function sendToWebhook() {
+            const data = {
+                questions: [
+                    { question: '1. ท่านคิดว่าการยกและถือของที่มีน้ำหนัก 20 กิโลกรัมยากหรือไม่?', score: document.getElementById('q1').value },
+                    { question: '2. ท่านรู้สึกว่าการเดินภายในห้องยากหรือไม่?', score: document.getElementById('q2').value },
+                    { question: '3. ท่านเคลื่อนย้ายตัวเองจากเก้าอี้ไปเตียงนอนยากหรือไม่?', score: document.getElementById('q3').value },
+                    { question: '4. ท่านรู้สึกว่าการเดินขึ้นบันไดจำนวน 10 ขั้นยากหรือไม่?', score: document.getElementById('q4').value },
+                    { question: '5. ท่านเคยมีประวัติหกล้มมากี่ครั้ง?', score: document.getElementById('q5').value },
+                ],
+                totalScore: totalScore,
+                riskLevel: riskLevel
+            };
 
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'ผลการประเมิน');
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-
-            const blob = new Blob([wbout], { type: 'application/octet-stream' });
-            const formData = new FormData();
-            formData.append('file', blob, 'sarc-f-assessment.xlsx');
-            formData.append('email', 'drongmuang@gmail.com');
-
-            fetch('YOUR_SERVER_ENDPOINT', {
+            fetch('YOUR_WEBHOOK_URL', {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    alert('ส่งผลลัพธ์เรียบร้อยแล้ว');
-                } else {
-                    alert('เกิดข้อผิดพลาดในการส่งผลลัพธ์');
-                }
+                alert('ส่งผลลัพธ์เรียบร้อยแล้ว');
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -187,4 +178,4 @@
         }
     </script>
 </body>
-</html>
+</html>      
